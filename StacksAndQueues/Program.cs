@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics;
+using System.Linq.Expressions;
 
 namespace StacksAndQueues
 {
@@ -80,7 +81,13 @@ namespace StacksAndQueues
     }
 
 
-    public class ArrayQueue<T>
+    public class ArrayStack<T>
+    {
+        
+    } //do later
+
+
+    public class MyPersonalArrayQueue<T>
     {
         private T[] Entries;
         public int Capacity => Entries.Length;
@@ -88,7 +95,7 @@ namespace StacksAndQueues
         private int Start { get; set; }
         private int End { get; set; }
 
-        public ArrayQueue()
+        public MyPersonalArrayQueue()
         { 
             Entries = new T[4];
             Start = 0;
@@ -97,30 +104,30 @@ namespace StacksAndQueues
 
         private void Resize()
         {
-            if (End >= Capacity)
+            bool shouldGrow = Size >= Capacity;
+            bool shouldShrink = Size < Capacity >> 1;
+            //funny gross boolean math
+            int newCapacity = (int)(Capacity * ((shouldGrow ? 2 : 1) * (shouldShrink ? 0.5 : 1))); //apparently 1.5 -> int gives lagre value? test later pls
+
+
+            if (shouldShrink)
             {
-                T[] newArray = new T[Capacity << (Size > Capacity - 1 ? 1 : 0)];
-                for (int i = 0; i < Size; i++)
-                {
-                    newArray[i] = Entries[i+Start];
-                }
-                Entries = newArray;
-                End = Size;
-                Start = 0;
-                //Console.WriteLine("Grew and shifted!");
+                Debug.WriteLine("Shrunk and shifted!");
             }
-            if (Size < Capacity >> 1)
+            else if (shouldGrow)
             {
-                T[] newArray = new T[Capacity >> 1];
-                for (int i = 0; i < Size; i++)
-                {
-                    newArray[i] = Entries[i + Start];
-                }
-                Entries = newArray;
-                End = Size;
-                Start = 0;
-                //Console.WriteLine("Shrunk and shifted!");
+                Debug.WriteLine("Grew and shifted!");
             }
+
+
+            T[] newArray = new T[newCapacity];
+            for (int i = 0; i < Size; i++)
+            {
+                newArray[i] = Entries[i + Start];
+            }
+            Entries = newArray;
+            End = Size;
+            Start = 0;
         }
 
         public void Enqueue(T value)
@@ -153,17 +160,93 @@ namespace StacksAndQueues
     }
 
 
+    public class ArrayQueue<T>
+    {
+        private T[] Entries;
+        public int Capacity => Entries.Length;
+        public int Size { get; set; }
+        private int Start { get; set; }
+        private int End { get; set; }
+
+        public ArrayQueue()
+        {
+            Entries = new T[4];
+            Start = 0;
+            End = 0;
+            Size = 0;
+        }
+
+        private void Resize()
+        {
+            if (Size >= Capacity)
+            {
+                T[] newArray = new T[Capacity * 2];
+                int j = Start;
+                for (int i = 0; i < Capacity; i++)
+                {
+                    newArray[i] = Entries[j];
+                    j = j < Capacity - 1 ? j + 1 : 0;
+                }
+                Entries = newArray;
+                End = Size;
+                Start = 0;
+                //Debug.WriteLine("Grew!");
+            }
+        }
+
+        public void Enqueue(T value)
+        {
+            Entries[End] = value;
+            End++;
+            if (End > Capacity - 1) { End = 0; }
+            Size++;
+            Resize();
+        }
+        public T? Dequeue()
+        {
+            Start++;
+            T value = Entries[Start - 1];
+            if (Start > Capacity - 1) { Start = 0; }
+            Size--;
+            Resize();
+            return value;
+        }
+        public T? Peek()
+        {
+            return Entries[Start];
+        }
+        public bool IsEmpty()
+        {
+            return Size == 0;
+        }
+        public void Clear()
+        {
+            Start = 0;
+            End = 0;
+            Size = 0;
+            Entries = new T[4];
+        }
+    }
+
+
 
     internal class Program
     {
         static void Main(string[] args)
         {
             ArrayQueue<int> arrqueueTest = new();
-            for (int i = 0; i < 100; i++)
-            { 
+            for (int i = 0; i < 12; i++)
+            {
                 arrqueueTest.Enqueue(i);
             }
             arrqueueTest.Dequeue();
+            arrqueueTest.Dequeue();
+            arrqueueTest.Dequeue();
+            arrqueueTest.Dequeue();
+            for (int i = 0; i < 2; i++)
+            {
+                arrqueueTest.Enqueue(i+14);
+            }
             while (arrqueueTest.Size > 0)
             { 
                 Console.WriteLine(arrqueueTest.Dequeue());
